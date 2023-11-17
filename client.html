@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .msg0 {
+      color: red;
+    }
+    .msg1 {
+      color: blue;
+    }
+    .msg2 {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <form name="publish">
+    <input type="text" name="message">
+    <input type="submit" value="Send">
+  </form>
+  <p id="messages"></p>
+  <script>
+    // deberiamos usar wss, con ws los datos puede ser interceptados por cualquiera
+    let socket = new WebSocket("ws://localhost:8080");
+
+    // enviar el mensaje del form
+    document.forms.publish.onsubmit = function() {
+      let outgoingMessage = this.message.value;
+
+      socket.send(outgoingMessage);
+      return false;
+    };
+
+    // mensaje recibido - muestra el mensaje en div#messages
+    socket.onmessage = function(event) {
+      // siempre vamos a esperar un objeto asi que tenemos que hacer la conversion
+      let payload = JSON.parse(event.data);
+      console.log("Mensaje recibido: ", payload)
+
+      // agregamos los mensajes recibidos del server en #messages
+      let messageElem = document.createElement('div');
+      //usamos el type del objecto para definir la clase y diferenciarlo de los demas mensajes
+      messageElem.classList.add(`msg${payload.type}`)
+      messageElem.textContent = payload.content;
+      document.getElementById('messages').prepend(messageElem);
+    }
+  </script>
+</body>
+</html>
